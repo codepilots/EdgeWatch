@@ -183,8 +183,8 @@
 
   function countConsoleEvent(kind) {
     consoleLogCount += 1;
-    if (kind === 'warn') consoleWarningCount += 1;
-    if (kind === 'error') consoleErrorCount += 1;
+    if (kind === 'warn') {consoleWarningCount += 1;}
+    if (kind === 'error') {consoleErrorCount += 1;}
 
     // Every 50 logs adds a small pressure bump for spammy pages
     if (consoleLogCount % 50 === 0) {
@@ -206,7 +206,7 @@
   // Catch browser-reported runtime/resource failures that may never invoke
   // console.error directly (e.g., blocked image/script requests).
   window.addEventListener('error', (event) => {
-    if (!event) return;
+    if (!event) {return;}
     // Resource load error (IMG, SCRIPT, LINK, etc.)
     if (event.target && event.target !== window) {
       countConsoleEvent('error');
@@ -246,7 +246,7 @@
 
   // ─── Compute budget ─────────────────────────────────────────────────────────
   function accumulateCompute(ms) {
-    if (!enforcing || jsDisabled) return;
+    if (!enforcing || jsDisabled) {return;}
     computeMs += ms;
     sendToIsolated('compute_update', { computeMs });
 
@@ -262,7 +262,7 @@
 
   // ─── Pressure score ─────────────────────────────────────────────────────────
   function getPressureIgnoreRemainingMs() {
-    if (ignorePressureSeconds <= 0) return 0;
+    if (ignorePressureSeconds <= 0) {return 0;}
     const windowMs = ignorePressureSeconds * 1000;
     return Math.max(0, windowMs - (performance.now() - pageStartAtMs));
   }
@@ -272,8 +272,8 @@
   }
 
   function addPressure(amount, reason) {
-    if (!enforcing || jsDisabled) return;
-    if (isPressureIgnoredNow()) return;
+    if (!enforcing || jsDisabled) {return;}
+    if (isPressureIgnoredNow()) {return;}
     pressure += amount;
     sendToIsolated('pressure_update', { pressure: Math.round(pressure) });
     if (pressure > pressureThresholdLimit) {
@@ -282,14 +282,14 @@
   }
 
   function triggerDisableJS(reason) {
-    if (jsDisabled) return;
+    if (jsDisabled) {return;}
     jsDisabled = true;
     sendToIsolated('disable_js_request', { reason });
     disableJS();
   }
 
   function disableImageLoading() {
-    if (imagesDisabled) return;
+    if (imagesDisabled) {return;}
     imagesDisabled = true;
 
     if (_Image) {
@@ -346,7 +346,7 @@
   }
 
   function disableVideoStreams() {
-    if (videosDisabled) return;
+    if (videosDisabled) {return;}
     videosDisabled = true;
 
     try {
@@ -434,7 +434,7 @@
   }
 
   function handleOverload(kind, reason) {
-    if (!enforcing) return; // Don't intervene while enforcement is suspended
+    if (!enforcing) {return;} // Don't intervene while enforcement is suspended
 
     if (kind === 'images' && targetedInterventions) {
       disableImageLoading();
@@ -452,7 +452,7 @@
   // ─── Wrap scheduling APIs ────────────────────────────────────────────────────
   /** Returns a wrapped version of fn that measures its execution time. */
   function wrapCallback(fn) {
-    if (typeof fn !== 'function') return fn;
+    if (typeof fn !== 'function') {return fn;}
     return function (...args) {
       const start = performance.now();
       try {
@@ -464,12 +464,12 @@
   }
 
   window.setTimeout = function (fn, delay, ...rest) {
-    if (jsDisabled) return 0;
+    if (jsDisabled) {return 0;}
     return _setTimeout(wrapCallback(fn), delay, ...rest);
   };
 
   window.setInterval = function (fn, delay, ...rest) {
-    if (jsDisabled) return 0;
+    if (jsDisabled) {return 0;}
     return _setInterval(wrapCallback(fn), delay, ...rest);
   };
 
@@ -477,13 +477,13 @@
   window.clearInterval = _clearInterval;
 
   window.requestAnimationFrame = function (fn) {
-    if (jsDisabled) return 0;
+    if (jsDisabled) {return 0;}
     return _rAF(wrapCallback(fn));
   };
 
   if (_rIC) {
     window.requestIdleCallback = function (fn, opts) {
-      if (jsDisabled) return 0;
+      if (jsDisabled) {return 0;}
       return _rIC(wrapCallback(fn), opts);
     };
   }
@@ -523,7 +523,7 @@
   }
 
   function trackImageElement(img, allowSourceChange = false) {
-    if (!(img instanceof HTMLImageElement)) return 0;
+    if (!(img instanceof HTMLImageElement)) {return 0;}
 
     if (!trackedImages.has(img)) {
       trackedImages.add(img);
@@ -544,7 +544,7 @@
   }
 
   function applyImageDelta(delta, reason) {
-    if (delta <= 0) return;
+    if (delta <= 0) {return;}
     const prevTens = Math.floor(imageCount / 10);
     imageCount += delta;
     const nextTens = Math.floor(imageCount / 10);
@@ -573,7 +573,7 @@
   }
 
   function trackVideoElement(video, allowSourceChange = false) {
-    if (!(video instanceof HTMLVideoElement)) return 0;
+    if (!(video instanceof HTMLVideoElement)) {return 0;}
 
     if (!trackedVideos.has(video)) {
       trackedVideos.add(video);
@@ -594,7 +594,7 @@
   }
 
   function applyVideoDelta(delta, reason) {
-    if (delta <= 0) return;
+    if (delta <= 0) {return;}
     const prevBucket = Math.floor(videoStreamCount / 3);
     videoStreamCount += delta;
     const nextBucket = Math.floor(videoStreamCount / 3);
@@ -629,7 +629,7 @@
 
   // ─── MutationObserver: track <img> elements added to the DOM ───────────────
   const mutationObserver = new MutationObserver((mutations) => {
-    if (!enforcing || jsDisabled) return;
+    if (!enforcing || jsDisabled) {return;}
     let newImages = 0;
     let newVideos = 0;
     let addedNodes = 0;
@@ -637,7 +637,7 @@
       if (mutation.type === 'childList') {
         addedNodes += mutation.addedNodes.length;
         for (const node of mutation.addedNodes) {
-          if (node.nodeType !== 1) continue; // Element nodes only
+          if (node.nodeType !== 1) {continue;} // Element nodes only
           if (node.tagName === 'IMG') {
             newImages += trackImageElement(node);
           } else if (node.tagName === 'VIDEO') {
@@ -689,7 +689,7 @@
 
   // ─── Periodic DOM node count (once per second) ──────────────────────────────
   _setInterval(() => {
-    if (!enforcing || jsDisabled) return;
+    if (!enforcing || jsDisabled) {return;}
     const domNodes = document.getElementsByTagName('*').length;
     sendToIsolated('resource_update', { domNodes });
     if (domNodes > domNodesLimit) {
@@ -699,7 +699,7 @@
 
   // ─── Pressure decay (once per second) ───────────────────────────────────────
   _setInterval(() => {
-    if (!enforcing || jsDisabled) return;
+    if (!enforcing || jsDisabled) {return;}
     if (isPressureIgnoredNow()) {
       if (pressure !== 0) {
         pressure = 0;
@@ -741,9 +741,9 @@
     showDisableOverlay = ev.detail?.showDisableOverlay !== false;
     const mr = Number(ev.detail?.maxRequests);
     const ips = Number(ev.detail?.ignorePressureSeconds);
-    if (Number.isFinite(mr) && mr > 0) maxNetworkRequests = mr;
+    if (Number.isFinite(mr) && mr > 0) {maxNetworkRequests = mr;}
     applyMetricLimits(ev.detail ?? {});
-    if (Number.isFinite(ips) && ips >= 0) ignorePressureSeconds = ips;
+    if (Number.isFinite(ips) && ips >= 0) {ignorePressureSeconds = ips;}
     if (!showDisableOverlay && overlay?.isConnected) {
       hideOverlay();
     } else if (showDisableOverlay && jsDisabled && !overlay?.isConnected) {
@@ -760,8 +760,8 @@
     const nextBudget = Number(ev.detail?.dataBudget);
     const nextRequestCount = Number(ev.detail?.requestCount);
     const nextRequestBudget = Number(ev.detail?.requestBudget);
-    if (Number.isFinite(nextDataUsed) && nextDataUsed >= 0) dataUsedBytes = nextDataUsed;
-    if (Number.isFinite(nextBudget) && nextBudget > 0) dataBudgetBytes = nextBudget;
+    if (Number.isFinite(nextDataUsed) && nextDataUsed >= 0) {dataUsedBytes = nextDataUsed;}
+    if (Number.isFinite(nextBudget) && nextBudget > 0) {dataBudgetBytes = nextBudget;}
     if (Number.isFinite(nextRequestCount) && nextRequestCount >= 0) {
       networkRequestCount = nextRequestCount;
     }
@@ -778,7 +778,7 @@
     window.setTimeout           = () => 0;
     window.setInterval          = () => 0;
     window.requestAnimationFrame = () => 0;
-    if (_rIC) window.requestIdleCallback = () => 0;
+    if (_rIC) {window.requestIdleCallback = () => 0;}
 
     // Replace network APIs with stubs that fail immediately
     window.fetch = () =>
@@ -837,7 +837,7 @@
 
   // ─── Overlay ──────────────────────────────────────────────────────────────────
   function asPercent(value, max) {
-    if (!Number.isFinite(value) || !Number.isFinite(max) || max <= 0) return 0;
+    if (!Number.isFinite(value) || !Number.isFinite(max) || max <= 0) {return 0;}
     return Math.max(0, Math.min(100, (value / max) * 100));
   }
 
@@ -964,7 +964,7 @@
   }
 
   function ensureMetricsHud() {
-    if (metricsHud?.isConnected || (!(alwaysVisibleOverlay || hudForcedVisible)) || jsDisabled) return;
+    if (metricsHud?.isConnected || (!(alwaysVisibleOverlay || hudForcedVisible)) || jsDisabled) {return;}
     metricsHud = null; // clear any stale detached reference
 
     metricsHud = document.createElement('div');
@@ -1021,7 +1021,7 @@
   }
 
   function updateMetricsHud() {
-    if (!metricsHud) return;
+    if (!metricsHud) {return;}
     const exceeded = hasAnyMetricExceeded();
     if (exceeded && !lastExceededState) {
       hudAutoExpanded = true;
@@ -1033,15 +1033,15 @@
     const close = metricsHud.querySelector('[data-edgewatch-action="close-hud"]');
     const toggle = metricsHud.querySelector('[data-edgewatch-action="toggle-hud"]');
     const bars = metricsHud.querySelector('#edgewatch-metrics-hud-bars');
-    if (close) close.hidden = !shouldShowHudCloseButton();
-    if (toggle) toggle.textContent = getHudToggleLabel();
-    if (bars) bars.innerHTML = isHudExpanded() ? buildMetricsMarkup() : buildCollapsedHudMarkup();
+    if (close) {close.hidden = !shouldShowHudCloseButton();}
+    if (toggle) {toggle.textContent = getHudToggleLabel();}
+    if (bars) {bars.innerHTML = isHudExpanded() ? buildMetricsMarkup() : buildCollapsedHudMarkup();}
   }
 
   function updateOverlayMetrics() {
-    if (!overlay) return;
+    if (!overlay) {return;}
     const bars = overlay.querySelector('#edgewatch-overlay-metrics');
-    if (bars) bars.innerHTML = buildMetricsMarkup();
+    if (bars) {bars.innerHTML = buildMetricsMarkup();}
   }
 
   function onMetricsActionClick(event) {
@@ -1073,7 +1073,7 @@
     }
 
     const button = event.target.closest('[data-edgewatch-action="allow-more"]');
-    if (!button) return;
+    if (!button) {return;}
     event.preventDefault();
     event.stopPropagation();
     handleAllowMore(button.getAttribute('data-edgewatch-metric'));
@@ -1139,7 +1139,7 @@
   document.addEventListener(`${EVT}popup_request`, (ev) => {
     const requestId = ev.detail?.requestId;
     const action = ev.detail?.action;
-    if (!requestId || !action) return;
+    if (!requestId || !action) {return;}
 
     let response = { ok: false };
 
@@ -1172,7 +1172,7 @@
   }
 
   function showOverlay() {
-    if (overlay?.isConnected) return;
+    if (overlay?.isConnected) {return;}
     overlay = null; // clear any stale detached reference
 
     overlay = document.createElement('div');

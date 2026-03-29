@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+
+# Build output – install from source with `npm run build`
+dist/
+
+# Editor / OS artefacts
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

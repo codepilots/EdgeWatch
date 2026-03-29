@@ -56,7 +56,7 @@ async function dispatchSettingsToMainWorld(checkAllowOnce = false) {
 dispatchSettingsToMainWorld(true);
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName !== 'local' || !changes.edgewatch_settings) return;
+  if (areaName !== 'local' || !changes.edgewatch_settings) {return;}
   // Settings change after initial load: no need to re-check allow-once.
   dispatchSettingsToMainWorld(false);
 });
@@ -64,7 +64,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 async function dispatchStateToMainWorld() {
   try {
     const resp = await chrome.runtime.sendMessage({ type: 'GET_STATE' });
-    if (!resp?.state) return;
+    if (!resp?.state) {return;}
     document.dispatchEvent(
       new CustomEvent(`${EVT}state_update`, {
         detail: {
@@ -91,7 +91,7 @@ function requestFromMainWorld(action, detail = {}) {
     let settled = false;
 
     const complete = (value) => {
-      if (settled) return;
+      if (settled) {return;}
       settled = true;
       document.removeEventListener(responseEvent, onResponse);
       resolve(value);

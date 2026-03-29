@@ -1,0 +1,20 @@
+{
+  "name": "edgewatch",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EdgeWatch browser extension",
+  "scripts": {
+    "lint": "eslint .",
+    "test": "jest",
+    "build": "node build.js",
+    "build:watch": "node build.js --watch"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "esbuild": "^0.27.4",
+    "eslint": "^10.1.0",
+    "globals": "^17.4.0",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0"
+  }
+}
