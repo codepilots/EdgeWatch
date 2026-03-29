@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EdgeWatch</title>
+  <style>
+    *,
+    *::before,
+    *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 320px;
+      min-height: 200px;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+      background: #0f1117;
+      color: #e2e8f0;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    header img { width: 24px; height: 24px; }
+
+    header h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #f8fafc;
+    }
+
+    #status-tag {
+      margin-left: auto;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: #22c55e22;
+      color: #22c55e;
+    }
+
+    #status-tag.warn  { background: #f97316; color: #fff; }
+    #status-tag.alert { background: #ef4444; color: #fff; }
+
+    main { padding: 14px 16px; }
+
+    .metric { margin-bottom: 12px; }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .metric-value {
+      font-size: 12px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .bar-track {
+      height: 5px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: #3b82f6;
+      transition: width 0.3s ease;
+    }
+
+    .bar-fill.warn  { background: #f97316; }
+    .bar-fill.alert { background: #ef4444; }
+
+    .resources {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .res-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .res-label {
+      font-size: 10px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+
+    .res-val {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+
+    .res-val.warn  { color: #f97316; }
+    .res-val.alert { color: #ef4444; }
+
+    .pressure-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .pressure-label {
+      font-size: 11px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+    }
+
+    .pressure-val {
+      font-size: 14px;
+      font-weight: 700;
+      color: #3b82f6;
+    }
+
+    .pressure-val.warn  { color: #f97316; }
+    .pressure-val.alert { color: #ef4444; }
+
+    footer {
+      padding: 0 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    button {
+      width: 100%;
+      padding: 9px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: opacity 0.15s;
+    }
+
+    button:hover { opacity: 0.88; }
+    button:active { opacity: 0.75; }
+
+    button:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    #btn-data  { background: #2563eb; color: #fff; }
+    #btn-js    { background: #dc2626; color: #fff; }
+    #btn-opts  {
+      background: transparent;
+      color: #64748b;
+      border: 1px solid rgba(255,255,255,0.1);
+      font-weight: 400;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      margin: 4px 0 10px;
+    }
+
+    #loading {
+      padding: 32px 16px;
+      text-align: center;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="icons/icon48.png" alt="EdgeWatch icon" id="icon-img" />
+  <h1>EdgeWatch</h1>
+  <span id="status-tag">OK</span>
+</header>
+
+<div id="loading">Loading…</div>
+
+<main id="content" hidden>
+
+  <!-- Data budget -->
+  <div class="metric">
+    <div class="metric-header">
+      <span class="metric-label">Network data</span>
+      <span class="metric-value" id="data-val">— / —</span>
+    </div>
+    <div class="bar-track">
+      <div class="bar-fill" id="data-bar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- Compute budget -->
+  <div class="metric">
+    <div class="metric-header">
+      <span class="metric-label">JS compute</span>
+      <span class="metric-value" id="compute-val">— / —</span>
+    </div>
+    <div class="bar-track">
+      <div class="bar-fill" id="compute-bar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- Resources -->
+  <div class="resources">
+    <div class="res-card">
+      <div class="res-label">Images</div>
+      <div class="res-val" id="res-images">—</div>
+    </div>
+    <div class="res-card">
+      <div class="res-label">DOM</div>
+      <div class="res-val" id="res-dom">—</div>
+    </div>
+    <div class="res-card">
+      <div class="res-label">Workers</div>
+      <div class="res-val" id="res-workers">—</div>
+    </div>
+  </div>
+
+  <!-- Pressure -->
+  <div class="pressure-row">
+    <span class="pressure-label">Pressure score</span>
+    <span class="pressure-val" id="pressure-val">0</span>
+  </div>
+
+  <hr class="divider" />
+
+</main>
+
+<footer>
+  <button id="btn-data" disabled>Allow another 50 MB for this page</button>
+  <button id="btn-js"   disabled>Temporarily allow JS for this page</button>
+  <button id="btn-opts">⚙ Options</button>
+</footer>
+
+<script src="popup.js"></script>
+</body>
+</html>

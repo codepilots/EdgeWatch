@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "priority": 100,
+    "action": { "type": "block" },
+    "condition": {
+      "urlFilter": "*",
+      "resourceTypes": [
+        "script",
+        "image",
+        "xmlhttprequest",
+        "media",
+        "font",
+        "stylesheet",
+        "sub_frame",
+        "other"
+      ]
+    }
+  }
+]
