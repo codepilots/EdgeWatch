@@ -1,10 +1,11 @@
 'use strict';
 
-// ─── Configuration ────────────────────────────────────────────────────────────
+// --- Configuration ------------------------------------------------------------
 // Default data budget per tab per navigation: 50 MB
 const DEFAULT_DATA_BUDGET_BYTES = 50 * 1024 * 1024;
 // Each "Allow another 50 MB" click adds this many bytes to the budget
 const DATA_BUDGET_INCREMENT_BYTES = 50 * 1024 * 1024;
+const REQUEST_BUDGET_INCREMENT = 100;
 
 // Telemetry: set TELEMETRY_ENABLED = true and configure TELEMETRY_ENDPOINT
 // to activate anonymous aggregated reporting to a remote server.
@@ -27,12 +28,31 @@ const SUBRESOURCE_TYPES = [
 // DNR session rule IDs: base value + tabId ensures uniqueness
 const DNR_RULE_ID_BASE = 10_000;
 
-// ─── Per-tab state ────────────────────────────────────────────────────────────
+// --- Cached extension settings -----------------------------------------------
+let bgSettings = { maxRequests: 250 };
+
+(async () => {
+  const stored = await chrome.storage.local.get('edgewatch_settings').catch(() => ({}));
+  if (stored.edgewatch_settings?.maxRequests != null) {
+    bgSettings.maxRequests = Number(stored.edgewatch_settings.maxRequests) || 250;
+  }
+})();
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local' || !changes.edgewatch_settings) return;
+  const next = changes.edgewatch_settings.newValue;
+  if (next?.maxRequests != null) {
+    bgSettings.maxRequests = Number(next.maxRequests) || 250;
+  }
+});
+
+// --- Per-tab state ------------------------------------------------------------
 /**
  * @typedef {{ dataUsed: number, dataBudget: number, computeMs: number,
  *   images: number, domNodes: number, workers: number,
  *   pressureMax: number, blocked: boolean, jsDisabled: boolean,
- *   interventions: number, recentRequests: number[] }} TabState
+ *   interventions: number, requestCount: number, requestBudget: number,
+ *   recentRequests: number[] }} TabState
  */
 
 /** @type {Map<number, TabState>} */
@@ -50,6 +70,8 @@ function defaultState() {
     blocked: false,
     jsDisabled: false,
     interventions: 0,
+    requestCount: 0,
+    requestBudget: bgSettings.maxRequests,
     recentRequests: [],
   };
 }
@@ -69,7 +91,7 @@ async function resetState(tabId) {
   updateBadge(tabId, null);
 }
 
-// ─── Badge helpers ────────────────────────────────────────────────────────────
+// --- Badge helpers ------------------------------------------------------------
 function updateBadge(tabId, state) {
   if (!state || (!state.blocked && !state.jsDisabled)) {
     chrome.action.setBadgeText({ tabId, text: '' }).catch(() => {});
@@ -84,7 +106,7 @@ function updateBadge(tabId, state) {
   }
 }
 
-// ─── DNR session rules ────────────────────────────────────────────────────────
+// --- DNR session rules --------------------------------------------------------
 async function addBlockingRule(tabId) {
   const ruleId = DNR_RULE_ID_BASE + tabId;
   try {
@@ -119,11 +141,14 @@ async function removeBlockingRule(tabId) {
   }
 }
 
-// ─── webRequest: count downloaded bytes per tab ────────────────────────────
+// --- webRequest: count downloaded bytes and request volume per tab -----------
 chrome.webRequest.onHeadersReceived.addListener(
   (details) => {
     if (details.tabId < 0) return; // background / extension-internal request
     if (!SUBRESOURCE_TYPES.includes(details.type)) return;
+
+    const state = getState(details.tabId);
+    state.requestCount += 1;
 
     const clHeader = details.responseHeaders?.find(
       (h) => h.name.toLowerCase() === 'content-length',
@@ -131,7 +156,6 @@ chrome.webRequest.onHeadersReceived.addListener(
     if (clHeader) {
       const bytes = parseInt(clHeader.value, 10);
       if (Number.isFinite(bytes) && bytes > 0) {
-        const state = getState(details.tabId);
         state.dataUsed += bytes;
         if (!state.blocked && state.dataUsed >= state.dataBudget) {
           state.blocked = true;
@@ -142,8 +166,16 @@ chrome.webRequest.onHeadersReceived.addListener(
       }
     }
 
+    // Check request count budget
+    if (!state.blocked && state.requestBudget > 0 &&
+      state.requestCount >= state.requestBudget) {
+      state.blocked = true;
+      state.interventions += 1;
+      addBlockingRule(details.tabId);
+      updateBadge(details.tabId, state);
+    }
+
     // Track request bursts so the content script can update pressure score
-    const state = getState(details.tabId);
     const now = Date.now();
     state.recentRequests = state.recentRequests.filter((t) => now - t < 1000);
     state.recentRequests.push(now);
@@ -155,19 +187,19 @@ chrome.webRequest.onHeadersReceived.addListener(
   ['responseHeaders'],
 );
 
-// ─── Navigation lifecycle ─────────────────────────────────────────────────────
+// --- Navigation lifecycle -----------------------------------------------------
 chrome.webNavigation.onCommitted.addListener(async (details) => {
   if (details.frameId !== 0) return; // main frame only
   await resetState(details.tabId);
 });
 
-// ─── Tab cleanup ──────────────────────────────────────────────────────────────
+// --- Tab cleanup --------------------------------------------------------------
 chrome.tabs.onRemoved.addListener(async (tabId) => {
   await removeBlockingRule(tabId);
   tabState.delete(tabId);
 });
 
-// ─── Message handling ─────────────────────────────────────────────────────────
+// --- Message handling ---------------------------------------------------------
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Messages from content scripts carry sender.tab.id;
   // messages from the popup carry an explicit message.tabId.
@@ -235,6 +267,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           domNodes: state.domNodes,
           workers: state.workers,
           pressureMax: state.pressureMax,
+          requestCount: state.requestCount,
+          requestBudget: state.requestBudget,
           blocked: state.blocked,
           jsDisabled: state.jsDisabled,
           interventions: state.interventions,
@@ -267,6 +301,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
     }
 
+    case 'INCREASE_METRIC_CAPACITY': {
+      if (message.metric === 'networkData') {
+        state.dataBudget += message.amountBytes || DATA_BUDGET_INCREMENT_BYTES;
+        state.blocked = false;
+        removeBlockingRule(tabId);
+        updateBadge(tabId, state);
+        sendResponse({ ok: true, dataBudget: state.dataBudget });
+        break;
+      }
+
+      if (message.metric === 'networkRequests') {
+        state.requestBudget += message.amount || REQUEST_BUDGET_INCREMENT;
+        state.blocked = false;
+        removeBlockingRule(tabId);
+        updateBadge(tabId, state);
+        sendResponse({ ok: true, requestBudget: state.requestBudget });
+        break;
+      }
+
+      sendResponse({ ok: false });
+      break;
+    }
+
     default:
       break;
   }
@@ -274,7 +331,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true; // keep channel open for async sendResponse calls
 });
 
-// ─── Telemetry ────────────────────────────────────────────────────────────────
+// --- Telemetry ----------------------------------------------------------------
 if (TELEMETRY_ENABLED) {
   setInterval(async () => {
     const tabs = await chrome.tabs.query({}).catch(() => []);

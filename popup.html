@@ -10,8 +10,8 @@
     *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      width: 320px;
-      min-height: 200px;
+      width: 340px;
+      min-height: 220px;
       font-family: system-ui, -apple-system, sans-serif;
       font-size: 13px;
       background: #0f1117;
@@ -50,122 +50,93 @@
     #status-tag.warn  { background: #f97316; color: #fff; }
     #status-tag.alert { background: #ef4444; color: #fff; }
 
-    main { padding: 14px 16px; }
+    main { padding: 14px 16px 16px; }
 
-    .metric { margin-bottom: 12px; }
+    #loading,
+    .empty-state {
+      padding: 20px 4px;
+      text-align: center;
+      color: #64748b;
+      line-height: 1.5;
+    }
 
-    .metric-header {
+    .section-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .primary-action {
+      margin-bottom: 16px;
+    }
+
+    .metric-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .metric-item {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .metric-top {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 5px;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 6px;
     }
 
     .metric-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #94a3b8;
-      font-weight: 600;
-    }
-
-    .metric-value {
       font-size: 12px;
-      font-weight: 600;
-      color: #e2e8f0;
-    }
-
-    .bar-track {
-      height: 5px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 99px;
-      overflow: hidden;
-    }
-
-    .bar-fill {
-      height: 100%;
-      border-radius: 99px;
-      background: #3b82f6;
-      transition: width 0.3s ease;
-    }
-
-    .bar-fill.warn  { background: #f97316; }
-    .bar-fill.alert { background: #ef4444; }
-
-    .resources {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .res-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 8px;
-      padding: 8px;
-      text-align: center;
-    }
-
-    .res-label {
-      font-size: 10px;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 4px;
-    }
-
-    .res-val {
-      font-size: 13px;
       font-weight: 700;
-      color: #e2e8f0;
+      color: #f8fafc;
     }
 
-    .res-val.warn  { color: #f97316; }
-    .res-val.alert { color: #ef4444; }
-
-    .pressure-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 10px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 8px;
-      margin-bottom: 12px;
+    .metric-values {
+      font-size: 12px;
+      color: #fca5a5;
+      font-weight: 600;
+      text-align: right;
     }
 
-    .pressure-label {
+    .metric-meta {
       font-size: 11px;
       color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      font-weight: 600;
+      margin-bottom: 10px;
     }
 
-    .pressure-val {
-      font-size: 14px;
-      font-weight: 700;
-      color: #3b82f6;
-    }
-
-    .pressure-val.warn  { color: #f97316; }
-    .pressure-val.alert { color: #ef4444; }
-
-    footer {
-      padding: 0 16px 14px;
+    .actions {
       display: flex;
       flex-direction: column;
-      gap: 7px;
+      gap: 8px;
+      margin-top: 16px;
     }
 
     button {
       width: 100%;
-      padding: 9px 12px;
+      appearance: none;
+      -webkit-appearance: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      margin: 0;
+      min-height: 0;
+      line-height: 1.1;
+      font-family: inherit;
+      padding: 10px 12px;
       font-size: 12px;
       font-weight: 600;
       border: none;
-      border-radius: 7px;
+      border-radius: 8px;
       cursor: pointer;
       letter-spacing: 0.01em;
       transition: opacity 0.15s;
@@ -175,97 +146,44 @@
     button:active { opacity: 0.75; }
 
     button:disabled {
-      opacity: 0.35;
+      opacity: 0.4;
       cursor: default;
     }
 
-    #btn-data  { background: #2563eb; color: #fff; }
-    #btn-js    { background: #dc2626; color: #fff; }
-    #btn-opts  {
+    #btn-show-hud { background: #2563eb; color: #fff; }
+    .btn-increase { background: #f97316; color: #fff; }
+    #btn-opts {
       background: transparent;
-      color: #64748b;
+      color: #94a3b8;
       border: 1px solid rgba(255,255,255,0.1);
-      font-weight: 400;
-    }
-
-    .divider {
-      border: none;
-      border-top: 1px solid rgba(255,255,255,0.07);
-      margin: 4px 0 10px;
-    }
-
-    #loading {
-      padding: 32px 16px;
-      text-align: center;
-      color: #475569;
+      font-weight: 500;
     }
   </style>
 </head>
 <body>
 
 <header>
-  <img src="icons/icon48.png" alt="EdgeWatch icon" id="icon-img" />
+  <img src="icons/icon48.png" alt="EdgeWatch icon" />
   <h1>EdgeWatch</h1>
   <span id="status-tag">OK</span>
 </header>
 
-<div id="loading">Loading…</div>
+<main>
+  <div id="loading">Loading…</div>
 
-<main id="content" hidden>
+  <div id="content" hidden>
+    <div class="primary-action">
+      <button id="btn-show-hud" type="button">Show HUD on page</button>
+    </div>
 
-  <!-- Data budget -->
-  <div class="metric">
-    <div class="metric-header">
-      <span class="metric-label">Network data</span>
-      <span class="metric-value" id="data-val">— / —</span>
-    </div>
-    <div class="bar-track">
-      <div class="bar-fill" id="data-bar" style="width:0%"></div>
-    </div>
-  </div>
+    <div class="section-label">Metrics Over Limit</div>
+    <div id="exceeded-list" class="metric-list"></div>
 
-  <!-- Compute budget -->
-  <div class="metric">
-    <div class="metric-header">
-      <span class="metric-label">JS compute</span>
-      <span class="metric-value" id="compute-val">— / —</span>
-    </div>
-    <div class="bar-track">
-      <div class="bar-fill" id="compute-bar" style="width:0%"></div>
+    <div class="actions">
+      <button id="btn-opts" type="button">Open Options</button>
     </div>
   </div>
-
-  <!-- Resources -->
-  <div class="resources">
-    <div class="res-card">
-      <div class="res-label">Images</div>
-      <div class="res-val" id="res-images">—</div>
-    </div>
-    <div class="res-card">
-      <div class="res-label">DOM</div>
-      <div class="res-val" id="res-dom">—</div>
-    </div>
-    <div class="res-card">
-      <div class="res-label">Workers</div>
-      <div class="res-val" id="res-workers">—</div>
-    </div>
-  </div>
-
-  <!-- Pressure -->
-  <div class="pressure-row">
-    <span class="pressure-label">Pressure score</span>
-    <span class="pressure-val" id="pressure-val">0</span>
-  </div>
-
-  <hr class="divider" />
-
 </main>
-
-<footer>
-  <button id="btn-data" disabled>Allow another 50 MB for this page</button>
-  <button id="btn-js"   disabled>Temporarily allow JS for this page</button>
-  <button id="btn-opts">⚙ Options</button>
-</footer>
 
 <script src="popup.js"></script>
 </body>

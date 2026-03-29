@@ -152,6 +152,13 @@
     </div>
     <input type="number" id="data-budget" min="1" max="10000" value="50" />
   </div>
+  <div class="field">
+    <div class="field-info">
+      <label for="max-requests">Network request cap (per navigation)</label>
+      <small>Default: 250. Network connections are blocked when this limit is reached.</small>
+    </div>
+    <input type="number" id="max-requests" min="1" max="100000" value="250" />
+  </div>
 </section>
 
 <section>
@@ -163,6 +170,13 @@
     </div>
     <input type="number" id="compute-budget" min="100" max="60000" value="2000" />
   </div>
+  <div class="field">
+    <div class="field-info">
+      <label for="ignore-pressure-seconds">Ignore pressure for first X seconds</label>
+      <small>Default: 0. Pressure accumulation and pressure overload checks are skipped during this startup window.</small>
+    </div>
+    <input type="number" id="ignore-pressure-seconds" min="0" max="600" value="0" />
+  </div>
 </section>
 
 <section>
@@ -173,6 +187,13 @@
       <small>Default: 200. Includes &lt;img&gt; elements and Image() constructor.</small>
     </div>
     <input type="number" id="max-images" min="1" max="10000" value="200" />
+  </div>
+  <div class="field">
+    <div class="field-info">
+      <label for="max-video-streams">Max video streams</label>
+      <small>Default: 8. Counts active &lt;video&gt; streams on the page.</small>
+    </div>
+    <input type="number" id="max-video-streams" min="1" max="1000" value="8" />
   </div>
   <div class="field">
     <div class="field-info">
@@ -191,7 +212,32 @@
 </section>
 
 <section>
+  <h2>Interventions</h2>
+  <div class="field">
+    <div class="field-info">
+      <label for="targeted-interventions">Use targeted overload actions</label>
+      <small>If enabled: compute overload pauses JS, network overload blocks network, image overload blocks image loading, video overload blocks video streams.</small>
+    </div>
+    <input type="checkbox" id="targeted-interventions" />
+  </div>
+  <div class="field">
+    <div class="field-info">
+      <label for="show-disable-overlay">Show behaviour budget exceeded overlay</label>
+      <small>If disabled, the full-screen intervention overlay is suppressed when JavaScript is paused.</small>
+    </div>
+    <input type="checkbox" id="show-disable-overlay" checked />
+  </div>
+</section>
+
+<section>
   <h2>Telemetry (optional)</h2>
+  <div class="field">
+    <div class="field-info">
+      <label for="always-visible-overlay">Always show metrics overlay</label>
+      <small>Shows a compact on-page metrics HUD that updates once per second.</small>
+    </div>
+    <input type="checkbox" id="always-visible-overlay" />
+  </div>
   <div class="field">
     <div class="field-info">
       <label for="telemetry-enabled">Enable anonymous telemetry</label>
