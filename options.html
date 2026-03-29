@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EdgeWatch – Options</title>
+  <style>
+    *,
+    *::before,
+    *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      background: #0f1117;
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+      color: #f8fafc;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 32px;
+    }
+
+    section {
+      margin-bottom: 28px;
+    }
+
+    h2 {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .field {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .field:last-child { border-bottom: none; }
+
+    .field-info label {
+      display: block;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 2px;
+    }
+
+    .field-info small {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    input[type="number"],
+    input[type="url"],
+    input[type="text"] {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 7px;
+      color: #e2e8f0;
+      font-size: 13px;
+      padding: 7px 10px;
+      width: 130px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="url"],
+    input[type="text"] { width: 220px; }
+
+    input:focus {
+      border-color: #3b82f6;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #3b82f6;
+      cursor: pointer;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    button {
+      padding: 10px 22px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    button:hover  { opacity: 0.88; }
+    button:active { opacity: 0.75; }
+
+    #btn-save   { background: #2563eb; color: #fff; }
+    #btn-reset  {
+      background: transparent;
+      color: #64748b;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    #save-msg {
+      font-size: 13px;
+      color: #22c55e;
+      align-self: center;
+      margin-left: 8px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    #save-msg.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<h1>EdgeWatch Options</h1>
+<p class="subtitle">Configure per-tab budgets and optional telemetry.</p>
+
+<section>
+  <h2>Network budget</h2>
+  <div class="field">
+    <div class="field-info">
+      <label for="data-budget">Data cap (MB per navigation)</label>
+      <small>Default: 50 MB. Requests are blocked when this limit is reached.</small>
+    </div>
+    <input type="number" id="data-budget" min="1" max="10000" value="50" />
+  </div>
+</section>
+
+<section>
+  <h2>Compute budget</h2>
+  <div class="field">
+    <div class="field-info">
+      <label for="compute-budget">Compute cap (ms per navigation)</label>
+      <small>Default: 2000 ms. JS is paused when this is exceeded.</small>
+    </div>
+    <input type="number" id="compute-budget" min="100" max="60000" value="2000" />
+  </div>
+</section>
+
+<section>
+  <h2>Resource limits</h2>
+  <div class="field">
+    <div class="field-info">
+      <label for="max-images">Max images</label>
+      <small>Default: 200. Includes &lt;img&gt; elements and Image() constructor.</small>
+    </div>
+    <input type="number" id="max-images" min="1" max="10000" value="200" />
+  </div>
+  <div class="field">
+    <div class="field-info">
+      <label for="max-dom">Max DOM nodes</label>
+      <small>Default: 10 000. Checked once per second.</small>
+    </div>
+    <input type="number" id="max-dom" min="100" max="1000000" value="10000" />
+  </div>
+  <div class="field">
+    <div class="field-info">
+      <label for="max-workers">Max Workers</label>
+      <small>Default: 4. Includes Worker and SharedWorker.</small>
+    </div>
+    <input type="number" id="max-workers" min="0" max="100" value="4" />
+  </div>
+</section>
+
+<section>
+  <h2>Telemetry (optional)</h2>
+  <div class="field">
+    <div class="field-info">
+      <label for="telemetry-enabled">Enable anonymous telemetry</label>
+      <small>Sends aggregated, anonymous metrics to the endpoint below every 60 s.</small>
+    </div>
+    <input type="checkbox" id="telemetry-enabled" />
+  </div>
+  <div class="field">
+    <div class="field-info">
+      <label for="telemetry-endpoint">Telemetry endpoint URL</label>
+      <small>HTTPS endpoint that receives JSON telemetry payloads (POST).</small>
+    </div>
+    <input type="url" id="telemetry-endpoint" placeholder="https://example.com/api/telemetry" />
+  </div>
+</section>
+
+<div class="actions">
+  <button id="btn-save">Save settings</button>
+  <button id="btn-reset">Restore defaults</button>
+  <span id="save-msg">✓ Saved</span>
+</div>
+
+<script src="options.js"></script>
+</body>
+</html>
