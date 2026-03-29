@@ -144,6 +144,7 @@
 
     button:hover { opacity: 0.88; }
     button:active { opacity: 0.75; }
+    button:focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; }
 
     button:disabled {
       opacity: 0.4;
@@ -165,11 +166,11 @@
 <header>
   <img src="icons/icon48.png" alt="EdgeWatch icon" />
   <h1>EdgeWatch</h1>
-  <span id="status-tag">OK</span>
+  <span id="status-tag" aria-live="polite">OK</span>
 </header>
 
 <main>
-  <div id="loading">Loading…</div>
+  <div id="loading" role="status" aria-live="polite">Loading…</div>
 
   <div id="content" hidden>
     <div class="primary-action">

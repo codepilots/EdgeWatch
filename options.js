@@ -90,8 +90,12 @@ $btnSave.addEventListener('click', async () => {
 $btnReset.addEventListener('click', async () => {
   await chrome.storage.local.remove('edgewatch_settings').catch(() => {});
   applyToForm(DEFAULTS);
+  $saveMsg.textContent = '✓ Reset to defaults';
   $saveMsg.classList.add('show');
-  setTimeout(() => $saveMsg.classList.remove('show'), 2000);
+  setTimeout(() => {
+    $saveMsg.classList.remove('show');
+    $saveMsg.textContent = '✓ Saved';
+  }, 2000);
 });
 
 // ─── Init ─────────────────────────────────────────────────────────────────────

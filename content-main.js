@@ -955,6 +955,8 @@
 
     metricsHud = document.createElement('div');
     metricsHud.id = 'edgewatch-metrics-hud';
+    metricsHud.setAttribute('role', 'region');
+    metricsHud.setAttribute('aria-label', 'EdgeWatch Metrics');
     metricsHud.setAttribute('style', [
       'position:fixed',
       'top:12px',
@@ -980,7 +982,7 @@
           EdgeWatch Metrics
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
-          <button type="button" data-edgewatch-action="toggle-hud" style="appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;margin:0;min-height:0;height:auto;line-height:1;font-family:inherit;font-weight:600;white-space:nowrap;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);color:#fff;border-radius:6px;padding:4px 7px;font-size:11px;cursor:pointer;pointer-events:auto;vertical-align:middle;">${getHudToggleLabel()}</button>
+          <button type="button" data-edgewatch-action="toggle-hud" aria-expanded="${isHudExpanded() ? 'true' : 'false'}" style="appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;margin:0;min-height:0;height:auto;line-height:1;font-family:inherit;font-weight:600;white-space:nowrap;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);color:#fff;border-radius:6px;padding:4px 7px;font-size:11px;cursor:pointer;pointer-events:auto;vertical-align:middle;">${getHudToggleLabel()}</button>
           ${shouldShowHudCloseButton() ? '<button type="button" data-edgewatch-action="close-hud" aria-label="Close HUD" style="appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;margin:0;min-height:0;height:auto;line-height:1;font-family:inherit;font-weight:700;white-space:nowrap;background:rgba(239,68,68,0.14);border:1px solid rgba(239,68,68,0.35);color:#fff;border-radius:6px;padding:4px 7px;font-size:11px;cursor:pointer;pointer-events:auto;vertical-align:middle;">Close</button>' : ''}
         </div>
       </div>
@@ -1020,7 +1022,10 @@
     const toggle = metricsHud.querySelector('[data-edgewatch-action="toggle-hud"]');
     const bars = metricsHud.querySelector('#edgewatch-metrics-hud-bars');
     if (close) close.hidden = !shouldShowHudCloseButton();
-    if (toggle) toggle.textContent = getHudToggleLabel();
+    if (toggle) {
+      toggle.textContent = getHudToggleLabel();
+      toggle.setAttribute('aria-expanded', isHudExpanded() ? 'true' : 'false');
+    }
     if (bars) bars.innerHTML = isHudExpanded() ? buildMetricsMarkup() : buildCollapsedHudMarkup();
   }
 
@@ -1183,14 +1188,18 @@
       'overflow:auto',
     ].join(';'));
 
+    overlay.setAttribute('role', 'alertdialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'edgewatch-overlay-title');
+
     overlay.innerHTML = `
       <div style="width:min(560px,92vw);background:rgba(255,255,255,0.07);border-radius:12px;padding:28px 24px;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
         <div style="font-size:52px;margin-bottom:16px;">⚠️</div>
-        <h2 style="margin:0 0 12px;font-size:22px;font-weight:700;letter-spacing:-0.01em;">
-          Behaviour Budget Exceeded
+        <h2 id="edgewatch-overlay-title" style="margin:0 0 12px;font-size:22px;font-weight:700;letter-spacing:-0.01em;">
+          Behavior Budget Exceeded
         </h2>
         <p style="margin:0 0 18px;opacity:0.8;line-height:1.6;">
-          This page exceeded its behaviour budget.<br>
+          This page exceeded its behavior budget.<br>
           JavaScript has been paused to protect your browser.
         </p>
         <div style="text-align:left;margin:0 0 22px;padding:14px 14px 8px;border-radius:10px;background:rgba(0,0,0,0.22);border:1px solid rgba(255,255,255,0.08);">
@@ -1199,7 +1208,7 @@
           </div>
           <div id="edgewatch-overlay-metrics"></div>
         </div>
-        <button id="edgewatch-allow-btn" style="
+        <button id="edgewatch-allow-btn" type="button" style="
           appearance:none;
           -webkit-appearance:none;
           display:inline-flex;
@@ -1230,9 +1239,13 @@
       (document.documentElement || document.body).appendChild(overlay);
       updateOverlayMetrics();
       overlay.addEventListener('click', onMetricsActionClick);
-      document.getElementById('edgewatch-allow-btn')?.addEventListener('click', () => {
-        sendToIsolated('reenable_js_request', {});
-      });
+      const allowBtn = document.getElementById('edgewatch-allow-btn');
+      if (allowBtn) {
+        allowBtn.addEventListener('click', () => {
+          sendToIsolated('reenable_js_request', {});
+        });
+        allowBtn.focus();
+      }
     }
 
     if (document.body) {
