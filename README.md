@@ -1,5 +1,5 @@
 # EdgeWatch
-An edge extension that ensures pages don't overstep their welcome
+An edge extension that ensures pages don't outstay their welcome
 
 ## Package and Install
 

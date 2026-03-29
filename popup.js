@@ -38,7 +38,7 @@ function renderExceededMetrics(metrics) {
         <div class="metric-label">${metric.label}</div>
         <div class="metric-values">${metric.valueText} / ${metric.maxText}</div>
       </div>
-      <div class="metric-meta">Increase cap ${metric.incrementText}</div>
+      <div class="metric-meta">Increase cap by ${metric.incrementText}</div>
       <button type="button" class="btn-increase" data-metric="${metric.id}">Increase ${metric.label}</button>
     </div>
   `).join('');

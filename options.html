@@ -118,6 +118,7 @@
 
     button:hover  { opacity: 0.88; }
     button:active { opacity: 0.75; }
+    button:focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; }
 
     #btn-save   { background: #2563eb; color: #fff; }
     #btn-reset  {
@@ -222,7 +223,7 @@
   </div>
   <div class="field">
     <div class="field-info">
-      <label for="show-disable-overlay">Show behaviour budget exceeded overlay</label>
+      <label for="show-disable-overlay">Show behavior budget exceeded overlay</label>
       <small>If disabled, the full-screen intervention overlay is suppressed when JavaScript is paused.</small>
     </div>
     <input type="checkbox" id="show-disable-overlay" checked />
@@ -257,7 +258,7 @@
 <div class="actions">
   <button id="btn-save">Save settings</button>
   <button id="btn-reset">Restore defaults</button>
-  <span id="save-msg">✓ Saved</span>
+  <span id="save-msg" role="status" aria-live="polite">✓ Saved</span>
 </div>
 
 <script src="options.js"></script>
