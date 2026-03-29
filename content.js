@@ -35,17 +35,30 @@ for (const [name, toMsg] of Object.entries(EVENT_TO_MESSAGE)) {
   });
 }
 
-async function dispatchSettingsToMainWorld() {
-  const stored = await chrome.storage.local.get('edgewatch_settings').catch(() => ({}));
+async function dispatchSettingsToMainWorld(checkAllowOnce = false) {
+  const [stored, allowOnceResp] = await Promise.all([
+    chrome.storage.local.get('edgewatch_settings').catch(() => ({})),
+    checkAllowOnce
+      ? chrome.runtime.sendMessage({ type: 'GET_ALLOW_ONCE' }).catch(() => ({}))
+      : Promise.resolve({}),
+  ]);
   const settings = { ...DEFAULT_SETTINGS, ...(stored.edgewatch_settings ?? {}) };
+  if (checkAllowOnce) {
+    // Embed the allow-once flag so content-main.js can handle it atomically
+    // with the rest of settings before any enforcement can fire.
+    settings.allowOnce = Boolean(allowOnceResp?.allowOnce);
+  }
   document.dispatchEvent(new CustomEvent(`${EVT}settings_update`, { detail: settings }));
 }
 
-dispatchSettingsToMainWorld();
+// Initial load: check allow-once flag in parallel with settings fetch so that
+// content-main.js receives both atomically in the first settings_update event.
+dispatchSettingsToMainWorld(true);
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName !== 'local' || !changes.edgewatch_settings) return;
-  dispatchSettingsToMainWorld();
+  // Settings change after initial load: no need to re-check allow-once.
+  dispatchSettingsToMainWorld(false);
 });
 
 async function dispatchStateToMainWorld() {
@@ -124,17 +137,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   return true;
 });
 
-// ─── Allow-once check on navigation ───────────────────────────────────────
-// The background sets allowJsOnce_<tabId> before reloading the tab.
-// We ask the background if the flag is set for our tab (the background
-// resolves sender.tab.id automatically), then notify content-main.js.
-(async () => {
-  try {
-    const resp = await chrome.runtime.sendMessage({ type: 'GET_ALLOW_ONCE' });
-    if (resp?.allowOnce) {
-      document.dispatchEvent(new CustomEvent(`${EVT}allow_once`));
-    }
-  } catch (_) {
-    // Non-critical; page may not be reachable yet or extension context invalid
-  }
-})();
+// The allow-once flag is now fetched together with the initial settings in
+// dispatchSettingsToMainWorld(true) above and forwarded to content-main.js
+// via the settings_update event, so no separate IIFE is needed here.

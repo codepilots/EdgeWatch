@@ -39,7 +39,11 @@
   const HUD_EXPANDED_STORAGE_KEY = 'edgewatch_hud_expanded';
 
   // ─── State ─────────────────────────────────────────────────────────────────
-  let enforcing  = true;   // false while "allow once" is active
+  // Start suspended: enforcement is enabled only after the first settings_update
+  // event arrives (which also carries the allow-once flag).  This prevents any
+  // budget check from firing during the async window between document_start and
+  // the settings/allow-once response, eliminating the page-load race condition.
+  let enforcing  = false;
   let jsDisabled = false;
   let computeMs  = 0;
   let imageCount = 0;
@@ -430,6 +434,8 @@
   }
 
   function handleOverload(kind, reason) {
+    if (!enforcing) return; // Don't intervene while enforcement is suspended
+
     if (kind === 'images' && targetedInterventions) {
       disableImageLoading();
       return;
@@ -706,22 +712,30 @@
   }, PRESSURE_DECAY_INTERVAL_MS);
 
   // ─── Listen for events from the isolated world ──────────────────────────────
-  // "allow once": skip enforcement for this navigation
-  document.addEventListener(`${EVT}allow_once`, () => {
-    enforcing = false;
-    if (jsDisabled) {
-      jsDisabled = false;
-      hideOverlay();
-    }
-  });
-
   // Network burst reported by background (5+ requests in 1 s)
   document.addEventListener(`${EVT}network_burst`, () => {
     addPressure(10, 'network request burst');
   });
 
   document.addEventListener(`${EVT}settings_update`, (ev) => {
+    const isInitial = !settingsReady;
     settingsReady = true;
+
+    if (isInitial) {
+      // On the first settings delivery (which now also carries the allow-once
+      // flag), decide whether enforcement should be active for this navigation.
+      // This runs before any budget check could fire, closing the race window.
+      if (ev.detail?.allowOnce) {
+        enforcing = false;
+        if (jsDisabled) {
+          jsDisabled = false;
+          hideOverlay();
+        }
+      } else {
+        enforcing = true;
+      }
+    }
+
     alwaysVisibleOverlay = Boolean(ev.detail?.alwaysVisibleOverlay);
     targetedInterventions = Boolean(ev.detail?.targetedInterventions);
     showDisableOverlay = ev.detail?.showDisableOverlay !== false;

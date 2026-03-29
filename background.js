@@ -188,6 +188,15 @@ chrome.webRequest.onHeadersReceived.addListener(
 );
 
 // --- Navigation lifecycle -----------------------------------------------------
+// Remove any active blocking rule as early as possible so that the new page's
+// initial resource requests are not blocked by a rule left from a previous
+// navigation.  onBeforeNavigate fires before document_start content scripts
+// run, giving us the earliest possible hook to clear the DNR rule.
+chrome.webNavigation.onBeforeNavigate.addListener((details) => {
+  if (details.frameId !== 0) return; // main frame only
+  removeBlockingRule(details.tabId).catch(() => {});
+});
+
 chrome.webNavigation.onCommitted.addListener(async (details) => {
   if (details.frameId !== 0) return; // main frame only
   await resetState(details.tabId);
