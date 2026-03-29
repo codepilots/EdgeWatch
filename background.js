@@ -39,7 +39,7 @@ let bgSettings = { maxRequests: 250 };
 })();
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area !== 'local' || !changes.edgewatch_settings) return;
+  if (area !== 'local' || !changes.edgewatch_settings) {return;}
   const next = changes.edgewatch_settings.newValue;
   if (next?.maxRequests != null) {
     bgSettings.maxRequests = Number(next.maxRequests) || 250;
@@ -144,8 +144,8 @@ async function removeBlockingRule(tabId) {
 // --- webRequest: count downloaded bytes and request volume per tab -----------
 chrome.webRequest.onHeadersReceived.addListener(
   (details) => {
-    if (details.tabId < 0) return; // background / extension-internal request
-    if (!SUBRESOURCE_TYPES.includes(details.type)) return;
+    if (details.tabId < 0) {return;} // background / extension-internal request
+    if (!SUBRESOURCE_TYPES.includes(details.type)) {return;}
 
     const state = getState(details.tabId);
     state.requestCount += 1;
@@ -188,8 +188,17 @@ chrome.webRequest.onHeadersReceived.addListener(
 );
 
 // --- Navigation lifecycle -----------------------------------------------------
+// Remove any active blocking rule as early as possible so that the new page's
+// initial resource requests are not blocked by a rule left from a previous
+// navigation.  onBeforeNavigate fires before document_start content scripts
+// run, giving us the earliest possible hook to clear the DNR rule.
+chrome.webNavigation.onBeforeNavigate.addListener((details) => {
+  if (details.frameId !== 0) {return;} // main frame only
+  removeBlockingRule(details.tabId).catch(() => {});
+});
+
 chrome.webNavigation.onCommitted.addListener(async (details) => {
-  if (details.frameId !== 0) return; // main frame only
+  if (details.frameId !== 0) {return;} // main frame only
   await resetState(details.tabId);
 });
 
@@ -204,7 +213,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Messages from content scripts carry sender.tab.id;
   // messages from the popup carry an explicit message.tabId.
   const tabId = sender.tab?.id ?? message.tabId;
-  if (!tabId) return false;
+  if (!tabId) {return false;}
 
   const state = getState(tabId);
 
@@ -215,9 +224,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     case 'RESOURCE_UPDATE': {
-      if (message.images !== undefined) state.images = message.images;
-      if (message.domNodes !== undefined) state.domNodes = message.domNodes;
-      if (message.workers !== undefined) state.workers = message.workers;
+      if (message.images !== undefined) {state.images = message.images;}
+      if (message.domNodes !== undefined) {state.domNodes = message.domNodes;}
+      if (message.workers !== undefined) {state.workers = message.workers;}
       break;
     }
 
@@ -296,7 +305,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'UPDATE_BUDGET': {
       // Options page can call this to adjust per-tab budgets globally.
-      if (message.dataBudgetBytes) state.dataBudget = message.dataBudgetBytes;
+      if (message.dataBudgetBytes) {state.dataBudget = message.dataBudgetBytes;}
       sendResponse({ ok: true });
       break;
     }
@@ -336,9 +345,9 @@ if (TELEMETRY_ENABLED) {
   setInterval(async () => {
     const tabs = await chrome.tabs.query({}).catch(() => []);
     for (const tab of tabs) {
-      if (!tab.id || !tab.url) continue;
+      if (!tab.id || !tab.url) {continue;}
       const state = tabState.get(tab.id);
-      if (!state) continue;
+      if (!state) {continue;}
       try {
         const url = new URL(tab.url);
         const payload = {

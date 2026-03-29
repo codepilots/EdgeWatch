@@ -45,7 +45,7 @@ function renderExceededMetrics(metrics) {
 }
 
 async function sendToTab(message) {
-  if (!activeTabId) return null;
+  if (!activeTabId) {return null;}
   try {
     return await chrome.tabs.sendMessage(activeTabId, message);
   } catch (_) {
@@ -75,14 +75,14 @@ async function loadPopupState() {
 }
 
 $btnShowHud.addEventListener('click', async () => {
-  if (!activeTabId) return;
+  if (!activeTabId) {return;}
   await sendToTab({ type: 'POPUP_SHOW_HUD' });
   window.close();
 });
 
 $exceededList.addEventListener('click', async (event) => {
   const button = event.target.closest('[data-metric]');
-  if (!button || !activeTabId) return;
+  if (!button || !activeTabId) {return;}
   button.disabled = true;
   await sendToTab({
     type: 'POPUP_INCREASE_METRIC_CAPACITY',
